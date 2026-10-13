@@ -1,0 +1,19 @@
+{
+  "domain": "s7plus",
+  "name": "S7 Plus",
+  "codeowners": [
+    "@alx2080"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/alx2080/s7plus",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/alx2080/s7plus/issues",
+  "loggers": [
+    "s7commplus"
+  ],
+  "requirements": [
+    "s7commplus==0.2.0"
+  ],
+  "version": "0.1.5"
+}

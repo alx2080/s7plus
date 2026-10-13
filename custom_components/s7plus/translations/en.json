@@ -1,0 +1,357 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add a Siemens S7-1200/1500 controller",
+        "description": "Connects over S7CommPlus (port 102). PUT/GET does not need to be enabled. If the controller refuses, TLS and the connection role are tried automatically.",
+        "data": {
+          "name": "Controller name",
+          "host": "IP address",
+          "port": "Port",
+          "connection_type": "Connect as",
+          "password": "Access password"
+        },
+        "data_description": {
+          "connection_type": "HMI suits most controllers. Try 'Engineering station' if the controller refuses.",
+          "password": "Only if the controller has access protection with a password."
+        },
+        "sections": {
+          "tls": {
+            "name": "TLS (secure communication)",
+            "description": "On by default: S7-1200 firmware V4.5+ and S7-1500 V2.9+ only accept TLS. Certificates are optional: leave the paths empty and the controller certificate is not checked. To verify it, give its CA file, e.g. /config/s7/ca.pem.",
+            "data": {
+              "use_tls": "Use TLS",
+              "tls_ca": "CA certificate (path)",
+              "tls_cert": "Client certificate (path)",
+              "tls_key": "Client key (path)"
+            }
+          }
+        }
+      },
+      "reconfigure": {
+        "title": "Controller connection",
+        "description": "Connects over S7CommPlus (port 102). PUT/GET does not need to be enabled. If the controller refuses, TLS and the connection role are tried automatically.",
+        "data": {
+          "host": "IP address",
+          "port": "Port",
+          "connection_type": "Connect as",
+          "password": "Access password"
+        },
+        "data_description": {
+          "connection_type": "HMI suits most controllers. Try 'Engineering station' if the controller refuses.",
+          "password": "Only if the controller has access protection with a password."
+        },
+        "sections": {
+          "tls": {
+            "name": "TLS (secure communication)",
+            "description": "On by default: S7-1200 firmware V4.5+ and S7-1500 V2.9+ only accept TLS. Certificates are optional: leave the paths empty and the controller certificate is not checked. To verify it, give its CA file, e.g. /config/s7/ca.pem.",
+            "data": {
+              "use_tls": "Use TLS",
+              "tls_ca": "CA certificate (path)",
+              "tls_cert": "Client certificate (path)",
+              "tls_key": "Client key (path)"
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect: {error}",
+      "connection_reset": "The controller dropped the connection ({error}). TLS and both connection roles were tried. Check in TIA Portal: protection level (full access, or enter the password here), that the controller allows HMI connections, and that its firewall/VLAN lets this Home Assistant reach port 102."
+    },
+    "abort": {
+      "already_configured": "This controller is already added.",
+      "reconfigure_successful": "Connection updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Controller options",
+        "menu_options": {
+          "settings": "Polling settings",
+          "refresh_tags": "Refresh tag addresses",
+          "copy_from": "Copy tags from another controller"
+        }
+      },
+      "settings": {
+        "title": "Polling settings",
+        "data": {
+          "scan_interval": "Scan interval",
+          "fast_scan_interval": "Fast scan interval",
+          "timeout": "Response timeout",
+          "link_timeout": "Connection lost after",
+          "tags_per_request": "Tags per request"
+        },
+        "data_description": {
+          "scan_interval": "For tags without 'Fast polling'. Can be fractional.",
+          "fast_scan_interval": "For tags marked 'Fast polling'. 0.2 s = 5 reads per second.",
+          "link_timeout": "With no successful read for this long, the 'Connection' sensor turns off.",
+          "tags_per_request": "How many tags one request reads. Lower it if the controller rejects large requests."
+        }
+      },
+      "refresh_tags": {
+        "title": "Tag addresses refreshed",
+        "description": "The tag catalog was read again from the controller.\n\nUpdated: **{updated}**\n\nNot found any more: {missing}\n\nSubmit to finish; tags that were not found should be edited or deleted."
+      },
+      "copy_from": {
+        "title": "Copy tags",
+        "description": "All tags of the chosen controller are added to this one.",
+        "data": {
+          "source_entry": "Copy from"
+        }
+      }
+    },
+    "abort": {
+      "no_source": "No other controller with tags yet.",
+      "not_loaded": "The controller is not running. Fix the connection first.",
+      "browse_failed": "Could not read the tag catalog: {error}. You can still add tags by DB address ('Enter the address manually')."
+    }
+  },
+  "config_subentries": {
+    "tag": {
+      "entry_type": "Tag",
+      "initiate_flow": {
+        "user": "Add tag",
+        "reconfigure": "Edit tag"
+      },
+      "step": {
+        "user": {
+          "title": "Add tag",
+          "description": "What should this tag be in Home Assistant?",
+          "menu_options": {
+            "sensor": "Sensor (read a value)",
+            "binary_sensor": "Binary sensor (on/off state)",
+            "switch": "Switch (write on/off)",
+            "number": "Number (write a value, e.g. a setpoint)",
+            "select": "Select (value ↔ named mode)"
+          }
+        },
+        "source": {
+          "title": "Where is the tag?",
+          "menu_options": {
+            "from_plc": "Choose from the controller's tags",
+            "manual": "Enter the address manually (non-optimized DB)"
+          }
+        },
+        "from_plc": {
+          "title": "Step 1 of 2: choose a block",
+          "description": "The controller has {count} suitable tags. Pick the data block (or I/Q/M area) and press Submit: the next step lists its tags. For a large block, type part of the tag name to shorten the list.",
+          "data": {
+            "block": "Block",
+            "filter": "Name contains"
+          }
+        },
+        "pick_tag": {
+          "title": "Step 2 of 2: choose the tag",
+          "description": "{count} tags match, {shown} shown. Narrow the filter if yours is not listed.",
+          "data": {
+            "tag_name": "Tag"
+          }
+        },
+        "test_result": {
+          "title": "Test read",
+          "description": "**{name}** currently reads: **{value}**\n\nSubmit to save the tag, or close this dialog and add it again with other settings."
+        },
+        "sensor": {
+          "title": "Sensor",
+          "description": "Tag: **{tag}**\n\n{error}",
+          "data": {
+            "name": "Name",
+            "fast_poll": "Fast polling",
+            "test_read": "Read the tag before saving",
+            "db": "Data block number",
+            "byte": "Byte offset",
+            "type": "Data type",
+            "bit": "Bit (0–7)",
+            "length": "String length (characters)",
+            "scale": "Scale (multiplier)",
+            "value_offset": "Offset",
+            "precision": "Displayed decimals",
+            "unit_of_measurement": "Unit of measurement",
+            "device_class": "Device class",
+            "state_class": "State class"
+          },
+          "data_description": {
+            "db": "Manual addresses need a data block with 'Optimized block access' turned off in TIA Portal.",
+            "fast_poll": "Read this tag at the fast interval from the controller options.",
+            "scale": "Value = raw × scale + offset."
+          }
+        },
+        "binary_sensor": {
+          "title": "Binary sensor",
+          "description": "Tag: **{tag}**\n\n{error}",
+          "data": {
+            "name": "Name",
+            "fast_poll": "Fast polling",
+            "test_read": "Read the tag before saving",
+            "db": "Data block number",
+            "byte": "Byte offset",
+            "type": "Data type",
+            "bit": "Bit (0–7)",
+            "length": "String length (characters)",
+            "invert": "Invert",
+            "device_class": "Device class"
+          },
+          "data_description": {
+            "db": "Manual addresses need a data block with 'Optimized block access' turned off in TIA Portal.",
+            "fast_poll": "Read this tag at the fast interval from the controller options."
+          }
+        },
+        "switch": {
+          "title": "Switch",
+          "description": "Tag: **{tag}**\n\n{error}",
+          "data": {
+            "name": "Name",
+            "fast_poll": "Fast polling",
+            "test_read": "Read the tag before saving",
+            "db": "Data block number",
+            "byte": "Byte offset",
+            "type": "Data type",
+            "bit": "Bit (0–7)",
+            "length": "String length (characters)",
+            "on_value": "Value for ON",
+            "off_value": "Value for OFF",
+            "invert": "Invert"
+          },
+          "data_description": {
+            "db": "Manual addresses need a data block with 'Optimized block access' turned off in TIA Portal.",
+            "fast_poll": "Read this tag at the fast interval from the controller options."
+          }
+        },
+        "number": {
+          "title": "Number",
+          "description": "Tag: **{tag}**\n\n{error}",
+          "data": {
+            "name": "Name",
+            "fast_poll": "Fast polling",
+            "test_read": "Read the tag before saving",
+            "db": "Data block number",
+            "byte": "Byte offset",
+            "type": "Data type",
+            "bit": "Bit (0–7)",
+            "length": "String length (characters)",
+            "scale": "Scale (multiplier)",
+            "value_offset": "Offset",
+            "min": "Minimum",
+            "max": "Maximum",
+            "step": "Step",
+            "mode": "Display mode",
+            "unit_of_measurement": "Unit of measurement",
+            "device_class": "Device class"
+          },
+          "data_description": {
+            "db": "Manual addresses need a data block with 'Optimized block access' turned off in TIA Portal.",
+            "fast_poll": "Read this tag at the fast interval from the controller options.",
+            "scale": "Value = raw × scale + offset."
+          }
+        },
+        "select": {
+          "title": "Select",
+          "description": "Tag: **{tag}**\n\n{error}",
+          "data": {
+            "name": "Name",
+            "fast_poll": "Fast polling",
+            "test_read": "Read the tag before saving",
+            "db": "Data block number",
+            "byte": "Byte offset",
+            "type": "Data type",
+            "bit": "Bit (0–7)",
+            "length": "String length (characters)",
+            "options": "Options"
+          },
+          "data_description": {
+            "db": "Manual addresses need a data block with 'Optimized block access' turned off in TIA Portal.",
+            "fast_poll": "Read this tag at the fast interval from the controller options.",
+            "options": "One per line: value=label, e.g. 0=Off, 1=Auto, 2=Manual."
+          }
+        }
+      },
+      "error": {
+        "invalid_scale": "Scale cannot be 0.",
+        "invalid_range": "Minimum must be below maximum.",
+        "invalid_options": "Options must be one 'value=label' per line, without duplicates.",
+        "length_required": "Strings need a length.",
+        "invalid_tag": "This combination is not possible (for example writing text or a single bit of a manual address).",
+        "not_loaded": "The controller is not running. Fix the connection first.",
+        "read_failed": "Reading failed: {error}"
+      },
+      "abort": {
+        "reconfigure_successful": "Tag updated.",
+        "not_loaded": "The controller is not running. Fix the connection first.",
+        "browse_failed": "Could not read the tag catalog: {error}. You can still add tags by DB address ('Enter the address manually').",
+        "no_tags": "No suitable tags found."
+      }
+    }
+  },
+  "selector": {
+    "connection_type": {
+      "options": {
+        "hmi": "HMI / SCADA (recommended)",
+        "es": "Engineering station",
+        "pg": "Programming device"
+      }
+    },
+    "plc_type": {
+      "options": {
+        "bool": "BOOL",
+        "byte": "BYTE",
+        "usint": "USINT",
+        "sint": "SINT",
+        "word": "WORD",
+        "uint": "UINT",
+        "int": "INT",
+        "dword": "DWORD",
+        "udint": "UDINT",
+        "dint": "DINT",
+        "real": "REAL",
+        "lword": "LWORD",
+        "ulint": "ULINT",
+        "lint": "LINT",
+        "lreal": "LREAL",
+        "time": "TIME (ms)",
+        "ltime": "LTIME (ms)",
+        "string": "STRING (text)"
+      }
+    },
+    "state_class": {
+      "options": {
+        "measurement": "Measurement",
+        "measurement_angle": "Measurement (angle)",
+        "total": "Total",
+        "total_increasing": "Total increasing"
+      }
+    },
+    "number_mode": {
+      "options": {
+        "auto": "Auto",
+        "box": "Input field",
+        "slider": "Slider"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "link": {
+        "name": "Connection"
+      }
+    },
+    "sensor": {
+      "cpu_state": {
+        "name": "CPU mode",
+        "state": {
+          "run": "Run",
+          "stop": "Stop"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "write_failed": {
+      "message": "Writing {name} failed: {error}"
+    },
+    "write_invalid": {
+      "message": "Value for {name} not accepted: {error}"
+    }
+  }
+}

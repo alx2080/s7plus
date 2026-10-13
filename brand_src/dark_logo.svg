@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 256">
+<svg x="0" y="0" width="256" height="256" viewBox="0 0 256 256">
+ <defs>
+  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+   <stop offset="0" stop-color="#6366F1"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
+  <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+   <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#1e1b4b" flood-opacity=".3"/></filter>
+ </defs>
+ <rect width="256" height="256" rx="58" fill="url(#g)"/>
+ <g filter="url(#s)">
+  <!-- DIN rail -->
+  <rect x="30" y="176" width="196" height="14" rx="7" fill="#fff" opacity=".9"/>
+  <!-- CPU module (wide) + two I/O modules -->
+  <rect x="44" y="70" width="70" height="114" rx="12" fill="#fff"/>
+  <rect x="122" y="84" width="40" height="100" rx="10" fill="#fff"/>
+  <rect x="170" y="84" width="40" height="100" rx="10" fill="#fff"/>
+ </g>
+ <!-- CPU display + LEDs -->
+ <rect x="56" y="84" width="46" height="26" rx="5" fill="#4338CA"/>
+ <circle cx="62" cy="126" r="5" fill="#22C55E"/><circle cx="78" cy="126" r="5" fill="#F59E0B"/><circle cx="94" cy="126" r="5" fill="#C7D2FE"/>
+ <rect x="56" y="142" width="46" height="6" rx="3" fill="#C7D2FE"/><rect x="56" y="154" width="32" height="6" rx="3" fill="#C7D2FE"/>
+ <!-- I/O LEDs -->
+ <g fill="#22C55E"><circle cx="134" cy="100" r="4"/><circle cx="134" cy="114" r="4"/><circle cx="182" cy="100" r="4"/></g>
+ <g fill="#C7D2FE"><circle cx="134" cy="128" r="4"/><circle cx="182" cy="114" r="4"/><circle cx="182" cy="128" r="4"/></g>
+ <g fill="#C7D2FE"><rect x="144" y="97" width="10" height="6" rx="3"/><rect x="144" y="111" width="10" height="6" rx="3"/><rect x="144" y="125" width="10" height="6" rx="3"/>
+  <rect x="192" y="97" width="10" height="6" rx="3"/><rect x="192" y="111" width="10" height="6" rx="3"/><rect x="192" y="125" width="10" height="6" rx="3"/></g>
+ <!-- plus badge -->
+ <circle cx="196" cy="56" r="28" fill="#fff" filter="url(#s)"/>
+ <path d="M196 42v28M182 56h28" stroke="#7C3AED" stroke-width="9" stroke-linecap="round"/>
+</svg>
+<text x="300" y="150" font-family="Inter" font-weight="800" font-size="128" fill="#ffffff" letter-spacing="-3">S7 Plus</text>
+<text x="304" y="218" font-family="Inter" font-weight="600" font-size="44" fill="#C4B5FD" letter-spacing="6">S7COMMPLUS</text>
+</svg>
