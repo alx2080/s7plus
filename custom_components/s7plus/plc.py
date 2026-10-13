@@ -356,6 +356,10 @@ class PlcConnection:
         self._factory = client_factory or _default_client_factory
         self._client: Any = None
         self._connect_lock = asyncio.Lock()
+        # One library operation at a time. Waiting here does not count against
+        # the response timeout: a long catalog browse must not make a queued
+        # poll time out and tear the session down under the browse.
+        self._op_lock = asyncio.Lock()
         self.identity: str | None = None
         self._cpu_state_supported = True
         self._link_errors, self._request_errors = _error_classes()
@@ -422,14 +426,19 @@ class PlcConnection:
             await self._drop()
 
     async def _call(self, func: Callable[[Any], Any], timeout: float | None = None) -> Any:
-        """Run one library call; a link-level failure drops the session."""
-        client = await self._ensure()
-        try:
-            async with asyncio.timeout(timeout or self.timeout):
-                return await func(client)
-        except self._link_errors as err:
-            await self._drop()
-            raise PlcConnectionError(str(err) or type(err).__name__) from err
+        """Run one library call; a link-level failure drops the session.
+
+        The timeout covers only the call itself, not the wait for a previous
+        operation (e.g. a catalog browse) to finish.
+        """
+        async with self._op_lock:
+            client = await self._ensure()
+            try:
+                async with asyncio.timeout(timeout or self.timeout):
+                    return await func(client)
+            except self._link_errors as err:
+                await self._drop()
+                raise PlcConnectionError(str(err) or type(err).__name__) from err
 
     # -- reading -------------------------------------------------------------
 
