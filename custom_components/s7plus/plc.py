@@ -21,6 +21,16 @@ import logging
 import struct
 from typing import Any
 
+# Import the library together with this module: Home Assistant loads integration
+# modules in an executor thread, while importing s7commplus later inside setup
+# would run on the event loop, and its first import reads the zlib dictionary
+# files from disk (a blocking call Home Assistant reports).
+import s7commplus  # noqa: F401
+import s7commplus.catalog  # noqa: F401
+import s7commplus.error  # noqa: F401
+import s7commplus.legitimation  # noqa: F401
+import s7commplus.typeinfo  # noqa: F401
+
 from .const import (
     CONF_BIT,
     CONF_BYTE,

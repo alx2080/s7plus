@@ -14,8 +14,17 @@ import logging
 from typing import Any
 
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
-from homeassistant.components.number import NumberDeviceClass, NumberMode
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.components.number import (
+    DEVICE_CLASS_UNITS as NUMBER_CLASS_UNITS,
+    NumberDeviceClass,
+    NumberMode,
+)
+from homeassistant.components.sensor import (
+    DEVICE_CLASS_STATE_CLASSES,
+    DEVICE_CLASS_UNITS as SENSOR_CLASS_UNITS,
+    SensorDeviceClass,
+    SensorStateClass,
+)
 from homeassistant.config_entries import (
     SOURCE_RECONFIGURE,
     ConfigEntry,
@@ -585,6 +594,38 @@ def tag_schema(platform: str, source: str, softtype: str | None, d: Mapping[str,
     return vol.Schema(f)
 
 
+def class_mismatch(platform: str, data: Mapping[str, Any]) -> tuple[str, str] | None:
+    """(error key, what is allowed) when unit or state class contradict the class.
+
+    Home Assistant only accepts certain units per device class (power in W/kW,
+    energy in Wh/kWh, ...) and certain state classes; a mismatch only shows up
+    later as a warning in the log, so the form catches it instead.
+    """
+    if not (cls := data.get(CONF_DEVICE_CLASS)):
+        return None
+    units_by_class = SENSOR_CLASS_UNITS if platform == "sensor" else NUMBER_CLASS_UNITS
+    try:
+        allowed = units_by_class.get(
+            SensorDeviceClass(cls) if platform == "sensor" else NumberDeviceClass(cls)
+        )
+    except ValueError:
+        return None
+    unit = data.get(CONF_UNIT_OF_MEASUREMENT) or None
+    if allowed is not None and unit not in allowed:
+        names = sorted(str(u) for u in allowed if u is not None)
+        if None in allowed:
+            names.append("—")
+        return "unit_not_for_class", ", ".join(names)
+    state_class = data.get(CONF_STATE_CLASS)
+    if platform == "sensor" and state_class:
+        classes = DEVICE_CLASS_STATE_CLASSES.get(SensorDeviceClass(cls))
+        if classes is not None and SensorStateClass(state_class) not in classes:
+            return "state_class_not_for_class", ", ".join(
+                sorted(str(c) for c in classes)
+            ) or "—"
+    return None
+
+
 def validate_tag(platform: str, data: dict[str, Any]) -> str | None:
     """An error key, or None when the tag is consistent."""
     if data.get(CONF_SCALE) == 0:
@@ -781,7 +822,7 @@ class TagSubentryFlow(ConfigSubentryFlow):
         else:
             defaults = dict(user_input)
         errors: dict[str, str] = {}
-        placeholders = {"tag": self._tag_text(), "error": ""}
+        placeholders = {"tag": self._tag_text(), "error": "", "allowed": ""}
 
         if user_input is not None:
             test_read = user_input.pop(CONF_TEST_READ, False)
@@ -793,6 +834,10 @@ class TagSubentryFlow(ConfigSubentryFlow):
                 data[CONF_TAG] = self._record
             if (error := validate_tag(platform, data)) is not None:
                 errors["base"] = error
+            elif platform in ("sensor", "number") and (
+                mismatch := class_mismatch(platform, data)
+            ):
+                errors["base"], placeholders["allowed"] = mismatch
             elif test_read:
                 value, error, text = await self._async_test_read(data)
                 if error is None:

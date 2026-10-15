@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from homeassistant.components.sensor import (
+    DEVICE_CLASS_STATE_CLASSES,
+    DEVICE_CLASS_UNITS,
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
@@ -19,6 +22,8 @@ from .const import CONF_PRECISION
 from .coordinator import CPU_KEY, S7PlusConfigEntry, S7PlusCoordinator, device_info_for
 from .entity import S7PlusEntity, async_setup_platform_entities
 from .plc import TEXT_TYPES
+
+_LOGGER = logging.getLogger(__name__)
 
 CONF_DEVICE_CLASS = "device_class"
 CONF_STATE_CLASS = "state_class"
@@ -53,8 +58,34 @@ class S7PlusSensor(S7PlusEntity, SensorEntity):
             self._attr_state_class = SensorStateClass(state_class)
         if unit := point.get(CONF_UNIT_OF_MEASUREMENT):
             self._attr_native_unit_of_measurement = unit
+        self._drop_contradicting_classes(subentry.title)
         if (precision := point.get(CONF_PRECISION)) is not None:
             self._attr_suggested_display_precision = int(precision)
+
+    def _drop_contradicting_classes(self, title: str) -> None:
+        """Ignore a class saved before the form checked it (e.g. "power" in kWh)."""
+        device_class = getattr(self, "_attr_device_class", None)
+        if device_class is None:
+            return
+        unit = getattr(self, "_attr_native_unit_of_measurement", None)
+        allowed = DEVICE_CLASS_UNITS.get(device_class)
+        if allowed is not None and unit not in allowed:
+            _LOGGER.warning(
+                "%s: unit %s does not fit device class %s; the class is ignored. "
+                "Edit the tag to pick a matching class or unit",
+                title, unit, device_class.value,
+            )
+            self._attr_device_class = None
+            return
+        state_class = getattr(self, "_attr_state_class", None)
+        classes = DEVICE_CLASS_STATE_CLASSES.get(device_class)
+        if state_class is not None and classes is not None and state_class not in classes:
+            _LOGGER.warning(
+                "%s: state class %s does not fit device class %s; the state class "
+                "is ignored. Edit the tag to fix it",
+                title, state_class.value, device_class.value,
+            )
+            self._attr_state_class = None
 
     @property
     def native_value(self) -> Any:

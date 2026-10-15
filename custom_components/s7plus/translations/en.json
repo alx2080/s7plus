@@ -272,6 +272,8 @@
         "invalid_range": "Minimum must be below maximum.",
         "invalid_options": "Options must be one 'value=label' per line, without duplicates.",
         "length_required": "Strings need a length.",
+        "unit_not_for_class": "The unit does not fit the device class. For this class Home Assistant accepts: {allowed}. Pick a matching unit or another class (leave the class empty for rpm).",
+        "state_class_not_for_class": "The state class does not fit the device class. Allowed: {allowed}. For example energy (kWh) — total_increasing, power (kW) — measurement.",
         "invalid_tag": "This combination is not possible (for example writing text or a single bit of a manual address).",
         "not_loaded": "The controller is not running. Fix the connection first.",
         "read_failed": "Reading failed: {error}"
