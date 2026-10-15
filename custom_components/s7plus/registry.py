@@ -29,7 +29,7 @@ def async_prepare_registries(
 ) -> None:
     """Register the device in the main entry and drop entities of deleted tags."""
     dev_reg = dr.async_get(hass)
-    device = dev_reg.async_get_device(identifiers=device_info["identifiers"])
+    device = _find_device(dev_reg, entry, device_info)
     if device is not None:
         _move_to_main_entry(dev_reg, entry, device)
     dev_reg.async_get_or_create(config_entry_id=entry.entry_id, **device_info)
@@ -40,6 +40,17 @@ def async_prepare_registries(
         if entity.unique_id not in keep:
             _LOGGER.debug("Removing %s: its register no longer exists", entity.entity_id)
             ent_reg.async_remove(entity.entity_id)
+
+
+def _find_device(
+    dev_reg: dr.DeviceRegistry, entry: ConfigEntry, device_info: DeviceInfo
+) -> dr.DeviceEntry | None:
+    """This entry's device, if it is registered already."""
+    identifier = next(iter(device_info["identifiers"]))
+    if hasattr(dev_reg, "async_get_device_by_identifier"):
+        # Home Assistant 2026.10+: identifiers are unique per config entry only.
+        return dev_reg.async_get_device_by_identifier(identifier, entry.entry_id)
+    return dev_reg.async_get_device(identifiers={identifier})
 
 
 def _move_to_main_entry(dev_reg: dr.DeviceRegistry, entry: ConfigEntry, device) -> None:
