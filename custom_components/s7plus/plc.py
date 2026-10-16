@@ -48,6 +48,29 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
+class _OmsSecretNotice(logging.Filter):
+    """Demote the library's "Could not extract OMS exporter secret" to debug.
+
+    The secret only matters for password legitimation on newer firmware, and
+    Python's ssl module cannot export it at all, so without a password the
+    warning would show up on every (re)connect and mean nothing. With a password
+    on such firmware the connection fails with its own clear error anyway.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelno == logging.WARNING and str(record.msg).startswith(
+            "Could not extract OMS exporter secret"
+        ):
+            record.levelno, record.levelname = logging.DEBUG, "DEBUG"
+            return logging.getLogger(record.name).isEnabledFor(logging.DEBUG)
+        return True
+
+
+_LIBRARY_LOGGER = logging.getLogger("s7commplus.async_client")
+if not any(type(f).__name__ == "_OmsSecretNotice" for f in _LIBRARY_LOGGER.filters):
+    _LIBRARY_LOGGER.addFilter(_OmsSecretNotice())
+
 # Softdatatype name -> (struct format, size) for scalar numbers (big-endian).
 NUMERIC_TYPES: dict[str, tuple[str, int]] = {
     "BYTE": (">B", 1),
