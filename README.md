@@ -1,94 +1,64 @@
 # S7 Plus
 
-*Home Assistant integration for Siemens S7-1200/1500 over S7CommPlus, tags picked from the PLC in the UI. UI in English, Ukrainian and Russian; documentation in Russian.*
+**English** | [Українська](README.uk.md)
 
-Кастомная интеграция Home Assistant для контроллеров **Siemens S7-1200 и
-S7-1500** по протоколу **S7CommPlus** — тому же, которым пользуются TIA Portal
-и панели оператора. Контроллер и теги настраиваются в браузере, без YAML.
-Работает на библиотеке [`s7commplus`](https://pypi.org/project/s7commplus/).
+A Home Assistant custom integration for **Siemens S7-1200 and S7-1500** controllers over **S7CommPlus**, the same protocol TIA Portal and operator panels use. The controller and the tags are set up in the browser, without YAML. Built on the [`s7commplus`](https://pypi.org/project/s7commplus/) library.
 
-> ⚠️ `s7commplus` — неофициальная реализация протокола в стадии бета
-> (версия 0.2.0), не поддерживается Siemens. Сначала проверьте интеграцию на
-> контроллере, который не управляет ответственным оборудованием.
+> ⚠️ `s7commplus` is an unofficial implementation of the protocol in beta (version 0.2.0), not supported by Siemens. Try the integration first on a controller that does not run critical equipment.
 
-## Возможности
+## Features
 
-- **Символьный доступ по именам тегов.** Тег выбирается из каталога,
-  прочитанного из самого контроллера: сначала блок (DB или область I/Q/M),
-  затем тег, с фильтром по имени. Работает с **оптимизированными** блоками
-  данных, **включать PUT/GET не нужно**.
-- **Ручной адрес** `DB.смещение` — запасной вариант для неоптимизированных
-  блоков, если каталог прочитать не удалось.
-- **Типы:** BOOL, BYTE, WORD, DWORD, LWORD, SINT/USINT, INT/UINT, DINT/UDINT,
-  LINT/ULINT, REAL, LREAL, TIME, LTIME, STRING/WSTRING/CHAR. Члены структур
-  доступны как отдельные теги. Массивы не поддерживаются.
-- **Сущности:** сенсор, бинарный сенсор, выключатель, число (уставки),
-  выбор (значение ↔ режим). Множитель и смещение для числовых тегов.
-- **Групповое чтение:** много тегов одним запросом. Отклонённый контроллером
-  тег не мешает остальным.
-- **Быстрый опрос** отдельных тегов со своим интервалом.
-- **Служебные сущности:** «Связь» (с настраиваемым таймаутом потери связи) и
-  «Режим CPU» (RUN/STOP, если прошивка его сообщает).
-- **Проверочное чтение** тега перед сохранением.
-- **«Обновить адреса тегов»** после изменения программы контроллера: теги
-  заново находятся по именам.
-- **Копирование тегов** с другого контроллера.
-- **Одна сессия на контроллер** для всех тегов: у S7-1200 мало свободных
-  соединений, интеграция не отнимает их у панелей и TIA Portal.
-- Модель контроллера и прошивка в карточке устройства, диагностика.
-- Интерфейс на украинском, русском и английском.
+- **Symbolic access by tag name.** A tag is picked from the catalogue read from the controller itself: first the block (a DB or the I/Q/M area), then the tag, with a filter by name. Works with **optimized** data blocks; **PUT/GET does not have to be enabled**.
+- **Manual address** `DB.offset` — a fallback for non-optimized blocks when the catalogue cannot be read.
+- **Types:** BOOL, BYTE, WORD, DWORD, LWORD, SINT/USINT, INT/UINT, DINT/UDINT, LINT/ULINT, REAL, LREAL, TIME, LTIME, STRING/WSTRING/CHAR. Structure members are available as separate tags. Arrays are not supported.
+- **Entities:** sensor, binary sensor, switch, number (setpoints), select (value ↔ mode). Scale and offset for numeric tags.
+- **Group reads:** many tags in one request. A tag refused by the controller does not affect the others.
+- **Fast polling** of individual tags with its own interval.
+- **Service entities:** "Connection" (with an adjustable connection-loss timeout) and "CPU mode" (RUN/STOP, if the firmware reports it).
+- **Test read** of a tag before saving.
+- **"Refresh tag addresses"** after the controller program has changed: the tags are found again by name.
+- **Copying tags** from another controller.
+- **One session per controller** for all tags: an S7-1200 has few free connections, and the integration does not take them away from panels and TIA Portal.
+- Controller model and firmware on the device card, diagnostics.
+- Interface in English, Ukrainian and Russian.
 
-## Подготовка контроллера в TIA Portal
+## Preparing the controller in TIA Portal
 
-1. **Уровень доступа.** «Полный доступ» без пароля либо пароль, который
-   вводится при добавлении контроллера.
-2. **Видимость тегов.** У нужных тегов в блоках данных должна стоять галочка
-   «Accessible from HMI/OPC UA/Web API» — по умолчанию она включена.
-3. **TLS.** S7-1200 с прошивкой V4.5+ и S7-1500 V2.9+ принимают только TLS —
-   галочка TLS в интеграции включена по умолчанию. Сертификаты указывать не
-   нужно (проверено на CPU 1215C, проект TIA Portal V21). Для проверки
-   сертификата контроллера можно указать файл CA, например `/config/s7/ca.pem`.
-4. **Ручные адреса.** У блоков данных, к которым обращаетесь по адресу,
-   отключите «Optimized block access». Для выбора из каталога это не нужно.
+1. **Access level.** "Full access" without a password, or a password entered when the controller is added.
+2. **Tag visibility.** The tags you need in data blocks must have "Accessible from HMI/OPC UA/Web API" ticked; it is on by default.
+3. **TLS.** An S7-1200 with firmware V4.5+ and an S7-1500 V2.9+ accept TLS only; the TLS box in the integration is on by default. No certificates are needed (verified on a CPU 1215C, TIA Portal V21 project). To verify the controller's certificate you can specify a CA file, for example `/config/s7/ca.pem`.
+4. **Manual addresses.** Turn off "Optimized block access" for the data blocks you access by address. It is not needed for picking tags from the catalogue.
 
-## Установка через HACS
+## Installation with HACS
 
-1. HACS → «⋮» (справа вверху) → **Custom repositories**.
+1. HACS → ⋮ (top right) → **Custom repositories**.
 2. Repository: `https://github.com/alx2080/s7plus`, Type: **Integration** → **Add**.
-3. Найдите интеграцию в HACS → **Download** → перезапустите Home Assistant.
+3. Find the integration in HACS → **Download** → restart Home Assistant.
 
-Новые версии HACS покажет сам, как обычное обновление.
+HACS offers new versions as ordinary updates.
 
-## Установка вручную
+## Manual installation
 
-1. Скопируйте `custom_components/s7plus` в `config/custom_components/`.
-2. Перезапустите Home Assistant (при первом запуске установится `s7commplus`).
-3. «Настройки → Устройства и службы → Добавить интеграцию → S7 Plus».
-4. На карточке контроллера — **«+ Добавить тег»** → тип сущности →
-   «Выбрать из тегов контроллера».
+1. Copy `custom_components/s7plus` to `config/custom_components/`.
+2. Restart Home Assistant (`s7commplus` is installed on the first start).
+3. Settings → Devices & services → Add integration → S7 Plus.
+4. On the controller card: **+ Add tag** → entity type → "Choose from the controller's tags".
 
-Первое чтение каталога на большой программе может занять до минуты. Затем
-каталог кешируется на 10 минут, так что следующие теги добавляются быстро.
+Reading the catalogue of a large program for the first time may take up to a minute. After that it is cached for 10 minutes, so the next tags are added quickly.
 
-## Если что-то не работает
+## Troubleshooting
 
-- **Не подключается:** попробуйте «Подключаться как» → «Инженерная станция».
-  Проверьте, не нужен ли TLS или пароль.
-- **Каталог не читается:** добавляйте теги вручную по адресу DB.
-  Если не помогло, создайте
-  [Issue](https://github.com/alx2080/s7plus/issues) и приложите журнал с
-  `s7commplus` в режиме отладки (проверьте, что в нём нет паролей и адресов):
+- **No connection:** try "Connect as" → "Engineering station". Check whether TLS or a password is needed.
+- **The catalogue cannot be read:** add tags manually by DB address. If that does not help, open an [issue](https://github.com/alx2080/s7plus/issues) and attach the log with `s7commplus` in debug mode (make sure it contains no passwords or addresses):
   ```yaml
   logger:
     logs:
       s7commplus: debug
       custom_components.s7plus: debug
   ```
-- **Тег перестал читаться после загрузки программы:** параметры →
-  «Обновить адреса тегов».
-- **Ошибки на больших запросах:** уменьшите «Тегов в одном запросе».
+- **A tag stopped reading after a program download:** options → "Refresh tag addresses".
+- **Errors on large requests:** lower "Tags per request".
 
-## Для разработчиков
+## For developers
 
-Переводы генерирует `tools/make_translations.py`. Проверка связи с контроллером —
-`tools/s7probe.py`.
+Translations are generated by `tools/make_translations.py`. `tools/s7probe.py` checks the connection to a controller.
