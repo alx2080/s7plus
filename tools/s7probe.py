@@ -6,9 +6,10 @@ writes a detailed log, so you can see where the controller drops the session.
 Usage (on any PC that can reach the PLC):
 
     pip install s7commplus==0.2.0
-    python s7probe.py 10.0.20.71 [--password SECRET] [--browse]
+    python s7probe.py 192.168.0.1 [--password SECRET] [--browse]
 
-Send the printed summary and the file s7probe.log to the integration author.
+Attach the printed summary and the file s7probe.log to an issue (check them for
+passwords and addresses first): https://github.com/alx2080/s7plus/issues
 """
 
 from __future__ import annotations
